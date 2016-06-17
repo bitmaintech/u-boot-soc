@@ -236,7 +236,8 @@ static int bcm5482_startup(struct phy_device *phydev)
 
 static struct phy_driver BCM5461S_driver = {
 	.name = "Broadcom BCM5461S",
-	.uid = 0x2060c0,
+	//.uid = 0x2060c0,
+    .uid = 0x3625e62,
 	.mask = 0xfffff0,
 	.features = PHY_GBIT_FEATURES,
 	.config = &bcm5461_config,
