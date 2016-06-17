@@ -29,6 +29,6 @@ int zynq_sdhci_init(u32 regbase)
 
 	host->host_caps = MMC_MODE_HC;
 
-	add_sdhci(host, 52000000, 52000000 >> 9);
+	add_sdhci(host, 52000000, 52000000 >> 3);
 	return 0;
 }
