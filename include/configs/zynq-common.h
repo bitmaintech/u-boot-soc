@@ -189,13 +189,15 @@
 	"boot_image=BOOT.bin\0"	\
 	"loadbit_addr=0x100000\0"	\
 	"loadbootenv_addr=0x2000000\0" \
-	"kernel_size=0x500000\0"	\
+	"kernel_size=0x800000\0"	\
 	"devicetree_size=0x20000\0"	\
 	"ramdisk_size=0x5E0000\0"	\
 	"boot_size=0xF00000\0"	\
 	"fdt_high=0x20000000\0"	\
 	"initrd_high=0x20000000\0"	\
 	"bootenv=uEnv.txt\0" \
+    "nandroot=/dev/mtdblock2\0" \
+    "nandrootfstype=jffs2\0" \
 	"loadbootenv=fatload mmc 0 ${loadbootenv_addr} ${bootenv}\0" \
 	"importbootenv=echo Importing environment from SD ...; " \
 		"env import -t ${loadbootenv_addr} $filesize\0" \
@@ -241,12 +243,10 @@
 			"fatload usb 0 0x2000000 ${ramdisk_image} && " \
 			"bootm 0x3000000 0x2000000 0x2A00000; " \
 		"fi\0" \
-	"nandboot=echo Copying Linux from NAND flash to RAM... && " \
-		"nand read 0x3000000 0x100000 ${kernel_size} && " \
-		"nand read 0x2A00000 0x600000 ${devicetree_size} && " \
-		"echo Copying ramdisk... && " \
-		"nand read 0x2000000 0x620000 ${ramdisk_size} && " \
-		"bootm 0x3000000 0x2000000 0x2A00000\0" \
+    "nandboot=echo Copying Linux from NAND flash to RAM... && " \
+        "nand read 0x2000000 0x1100000 ${kernel_size} && " \
+        "nand read 0x3000000 0x1020000 ${devicetree_size} && " \
+        "bootm 0x2000000 - 0x3000000\0" \
 	"jtagboot=echo TFTPing Linux to RAM... && " \
 		"tftpboot 0x3000000 ${kernel_image} && " \
 		"tftpboot 0x2A00000 ${devicetree_image} && " \
