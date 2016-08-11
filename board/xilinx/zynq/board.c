@@ -92,6 +92,32 @@ int board_late_init(void)
    //char *nandroot = NULL;
     char *bootargs = NULL;
    unsigned char *upgrade_buf = NULL;
+    unsigned int gpio_value = 0;
+
+    // check ipsig gpio to choose mount which filesystem
+    gpio_value = readl(0xe000a000 + 0x64);
+    printk("--- gpio value = 0x%08x\n", gpio_value);
+    if(gpio_value & 0x80000)
+    {
+        printk("--- mount angstrom file system\n");
+    }
+    else
+    {
+        setenv("bootargs", "noinitrd mem=1008M console=ttyPS0,115200 root=/dev/mtdblock2 rootfstype=jffs2 rw rootwait");
+        bootargs = getenv("bootargs");
+        if(bootargs)
+        {   
+            //printk("nandroot: %s\n", nandroot);
+            printk("bootargs: %s\n", bootargs);
+            printk("--- ipsig :  This time is boot for upgrade ---\n");
+        }
+        else
+        {
+            //printk("--- setenv nandroot to /dev/mtdblock2 failed! ---\n");
+            printk("--- ipsig : setenv bootargs to /dev/mtdblock2 failed! ---\n");
+        }
+    }
+
 
    nand = &nand_info[0];
    upgrade_buf = (unsigned char *)malloc(UPGARDE_MARKER_LEN*sizeof(unsigned char));
