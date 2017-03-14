@@ -103,7 +103,7 @@ int board_late_init(void)
     }
     else
     {
-        setenv("bootargs", "noinitrd mem=1008M console=ttyPS0,115200 root=/dev/mtdblock2 rootfstype=jffs2 rw rootwait");
+        setenv("bootargs", "noinitrd mem=1008M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
         bootargs = getenv("bootargs");
         if(bootargs)
         {   
@@ -146,7 +146,7 @@ int board_late_init(void)
        {
            //setenv("nandroot", "/dev/mtdblock2");
            //nandroot = getenv("nandroot");
-            setenv("bootargs", "noinitrd mem=1008M console=ttyPS0,115200 root=/dev/mtdblock2 rootfstype=jffs2 rw rootwait");
+            setenv("bootargs", "noinitrd mem=1008M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
             bootargs = getenv("bootargs");
            //if(nandroot)
             if(bootargs)
