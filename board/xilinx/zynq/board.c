@@ -16,6 +16,7 @@
 #define UPGARDE_MARKER_ADDR     0x1040000
 #define UPGARDE_MARKER_LEN      16
 #define NAND_SIZE_LIMIT         (128*1024)
+unsigned int ddr_size_type = 0;	// 0: 1GB; 1: 512 MB
 DECLARE_GLOBAL_DATA_PTR;
 
 #if (defined(CONFIG_FPGA) && !defined(CONFIG_SPL_BUILD)) || \
@@ -100,15 +101,41 @@ int board_late_init(void)
     if(gpio_value & 0x80000)
     {
         printk("--- mount angstrom file system\n");
+		if(ddr_size_type == 0)
+		{
+    		setenv("bootargs", "noinitrd mem=1008M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
+		}
+		else if(ddr_size_type == 1)
+		{
+    		setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
+		}
+		else
+		{
+    		setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
+		}
+		bootargs = getenv("bootargs");
+		printk("bootargs: %s\n", bootargs);
     }
     else
     {
-        setenv("bootargs", "noinitrd mem=1008M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
+		if(ddr_size_type == 0)
+		{
+			setenv("bootargs", "noinitrd mem=1008M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
+		}
+		else if(ddr_size_type == 1)
+		{
+			setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
+		}
+		else
+		{
+			setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
+		}
         bootargs = getenv("bootargs");
+		printk("bootargs: %s\n", bootargs);
         if(bootargs)
         {   
             //printk("nandroot: %s\n", nandroot);
-            printk("bootargs: %s\n", bootargs);
+            //printk("bootargs: %s\n", bootargs);
             printk("--- ipsig :  This time is boot for upgrade ---\n");
         }
         else
@@ -137,7 +164,22 @@ int board_late_init(void)
        {
            if(*(upgrade_buf + i) != i)
            {
-               break;
+				if(ddr_size_type == 0)
+				{
+					setenv("bootargs", "noinitrd mem=1008M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
+				}
+				else if(ddr_size_type == 1)
+				{
+					setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
+				}
+				else
+				{
+					setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
+				}
+				bootargs = getenv("bootargs");
+				printk("bootargs: %s\n", bootargs);
+
+				break;
            }
            marker_is_right = 1;
        }
@@ -146,9 +188,24 @@ int board_late_init(void)
        {
            //setenv("nandroot", "/dev/mtdblock2");
            //nandroot = getenv("nandroot");
-            setenv("bootargs", "noinitrd mem=1008M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
-            bootargs = getenv("bootargs");
+            //setenv("bootargs", "noinitrd mem=1008M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
+            //bootargs = getenv("bootargs");
            //if(nandroot)
+			if(ddr_size_type == 0)
+			{
+				setenv("bootargs", "noinitrd mem=1008M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
+			}
+			else if(ddr_size_type == 1)
+			{
+				setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
+			}
+			else
+			{
+				setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
+			}
+			bootargs = getenv("bootargs");
+			printk("bootargs: %s\n", bootargs);
+
             if(bootargs)
            {
                //printk("nandroot: %s\n", nandroot);
@@ -246,7 +303,30 @@ int board_mmc_init(bd_t *bd)
 
 int dram_init(void)
 {
-	gd->ram_size = CONFIG_SYS_SDRAM_SIZE;
+	long sys_sdram_size = 0;
+	long sdram_base_addr = 0;
+	long max_sdram_size = 1*1024*1024*1024;
+
+	sys_sdram_size = get_ram_size(&sdram_base_addr, max_sdram_size);
+	sys_sdram_size = sys_sdram_size/2;
+
+	if(sys_sdram_size = 0x40000000)
+	{
+		ddr_size_type = 0;
+		printf("--- %s: sys_sdram_size = 1 GB\n\n", __FUNCTION__);
+	}
+	else if(sys_sdram_size = 0x20000000)
+	{
+		ddr_size_type = 1;
+		printf("--- %s: sys_sdram_size = 512 MB\n\n", __FUNCTION__);
+	}
+	else
+	{
+		printf("--- %s: sys_sdram_size = 0x%08x\n\n", __FUNCTION__, sys_sdram_size);
+	}
+
+	//gd->ram_size = CONFIG_SYS_SDRAM_SIZE;
+	gd->ram_size = sys_sdram_size - 16*1024*1024;
 
 	zynq_ddrc_init();
 
