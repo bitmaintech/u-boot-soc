@@ -36,6 +36,7 @@ long get_ram_size(long *base, long maxsize)
 		save[i++] = *addr;
 		sync ();
 		*addr = ~cnt;
+		printf("Write: cnt = 0x%08x, addr = 0x%08x, *addr = 0x%08x\n", cnt, addr, *addr);
 	}
 
 	addr = base;
@@ -62,8 +63,10 @@ long get_ram_size(long *base, long maxsize)
 		addr = base + cnt;	/* pointer arith! */
 		val = *addr;
 		*addr = save[--i];
+		printf("Read: cnt = 0x%08x, addr = 0x%08x, val = 0x%08x\n", cnt, addr, val);
 		if (val != ~cnt) {
 			size = cnt * sizeof (long);
+			printf("size = 0x%08x\n", size);
 			/* Restore the original data before leaving the function.
 			 */
 			for (cnt <<= 1; cnt < maxsize / sizeof (long); cnt <<= 1) {

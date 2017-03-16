@@ -98,6 +98,9 @@ int board_late_init(void)
 	long sdram_base_addr = 0;
 	long max_sdram_size = 1*1024*1024*1024;
 	unsigned int ddr_size_type = 0;	// 0: 1GB; 1: 512 MB
+	unsigned int button_power_on = 0;
+
+#if 1 
 	// check DDR size
 	//sys_sdram_size = get_ram_size(&sdram_base_addr, max_sdram_size);
 	//printf("~~~1 sys_sdram_size = 0x%08x\n", sys_sdram_size);
@@ -169,6 +172,7 @@ int board_late_init(void)
             //printk("nandroot: %s\n", nandroot);
             //printk("bootargs: %s\n", bootargs);
             printk("--- ipsig :  This time is boot for upgrade ---\n");
+			button_power_on = 1;
         }
         else
         {
@@ -177,89 +181,99 @@ int board_late_init(void)
         }
     }
 
+	if(!button_power_on)
+	{
+   		nand = &nand_info[0];
+   		upgrade_buf = (unsigned char *)malloc(UPGARDE_MARKER_LEN*sizeof(unsigned char));
+   		memset(upgrade_buf, 0, UPGARDE_MARKER_LEN);
+   		read_len = UPGARDE_MARKER_LEN;
+   		//ret = nand_read_skip_bad(nand, UPGARDE_MARKER_ADDR, &read_len, upgrade_buf);
+   		ret = nand_read(nand, UPGARDE_MARKER_ADDR, &read_len, upgrade_buf);
+   		//ret = nand_read_skip_bad(nand, UPGARDE_MARKER_ADDR, &read_len, NULL, NAND_SIZE_LIMIT, upgrade_buf);
+   		if(!ret)
+   		{
+       		for(i=0; i<UPGARDE_MARKER_LEN; i++)
+       		{
+           		printk("--- upgrade marker upgrade_buf[%d] = 0x%x ---\n", i, *(upgrade_buf +i));
+       		}
 
-   nand = &nand_info[0];
-   upgrade_buf = (unsigned char *)malloc(UPGARDE_MARKER_LEN*sizeof(unsigned char));
-   memset(upgrade_buf, 0, UPGARDE_MARKER_LEN);
-   read_len = UPGARDE_MARKER_LEN;
-   //ret = nand_read_skip_bad(nand, UPGARDE_MARKER_ADDR, &read_len, upgrade_buf);
-   ret = nand_read(nand, UPGARDE_MARKER_ADDR, &read_len, upgrade_buf);
-   //ret = nand_read_skip_bad(nand, UPGARDE_MARKER_ADDR, &read_len, NULL, NAND_SIZE_LIMIT, upgrade_buf);
-   if(!ret)
-   {
-       for(i=0; i<UPGARDE_MARKER_LEN; i++)
-       {
-           printk("--- upgrade marker upgrade_buf[%d] = 0x%x ---\n", i, *(upgrade_buf +i));
-       }
+       		for(i=0; i<UPGARDE_MARKER_LEN; i++)
+       		{
+           		if(*(upgrade_buf + i) != i)
+           		{
+					if(ddr_size_type == 0)
+					{
+						setenv("bootargs", "noinitrd mem=1008M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
+						//setenv("bootargs", "mem=1008M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
+					}
+					else if(ddr_size_type == 1)
+					{
+						setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
+						//setenv("bootargs", "mem=496M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
+					}
+					else
+					{
+						setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
+						//setenv("bootargs", "mem=496M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
+					}
+					bootargs = getenv("bootargs");
+					printk("bootargs: %s\n", bootargs);
 
-       for(i=0; i<UPGARDE_MARKER_LEN; i++)
-       {
-           if(*(upgrade_buf + i) != i)
-           {
+					break;
+           		}
+           		marker_is_right = 1;
+       		}
+
+       		if(marker_is_right)
+       		{
+           		//setenv("nandroot", "/dev/mtdblock2");
+           		//nandroot = getenv("nandroot");
+            	//setenv("bootargs", "noinitrd mem=1008M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
+            	//bootargs = getenv("bootargs");
+           		//if(nandroot)
 				if(ddr_size_type == 0)
 				{
-					setenv("bootargs", "noinitrd mem=1008M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
-					//setenv("bootargs", "mem=1008M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
+					setenv("bootargs", "noinitrd mem=1008M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
 				}
 				else if(ddr_size_type == 1)
 				{
-					setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
-					//setenv("bootargs", "mem=496M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
+					setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
 				}
 				else
 				{
-					setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
-					//setenv("bootargs", "mem=496M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
+					setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
 				}
 				bootargs = getenv("bootargs");
 				printk("bootargs: %s\n", bootargs);
 
-				break;
-           }
-           marker_is_right = 1;
-       }
+            	if(bootargs)
+           		{
+               		//printk("nandroot: %s\n", nandroot);
+                	printk("bootargs: %s\n", bootargs);
+               		printk("--- This time is boot for upgrade ---\n");
+           		}
+           		else
+           		{
+               		//printk("--- setenv nandroot to /dev/mtdblock2 failed! ---\n");
+                	printk("--- setenv bootargs to /dev/mtdblock2 failed! ---\n");
+           		}
+       		}
+   		}
+   		else
+   		{
+       		printk("--- upgrade read nand error! ret = %d ---\n", ret);
+   		}
+   		free(upgrade_buf);
+   		/*Zynq7010 upgrade end*/    
+	}
+#endif
 
-       if(marker_is_right)
-       {
-           //setenv("nandroot", "/dev/mtdblock2");
-           //nandroot = getenv("nandroot");
-            //setenv("bootargs", "noinitrd mem=1008M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
-            //bootargs = getenv("bootargs");
-           //if(nandroot)
-			if(ddr_size_type == 0)
-			{
-				setenv("bootargs", "noinitrd mem=1008M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
-			}
-			else if(ddr_size_type == 1)
-			{
-				setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
-			}
-			else
-			{
-				setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
-			}
-			bootargs = getenv("bootargs");
-			printk("bootargs: %s\n", bootargs);
-
-            if(bootargs)
-           {
-               //printk("nandroot: %s\n", nandroot);
-                printk("bootargs: %s\n", bootargs);
-               printk("--- This time is boot for upgrade ---\n");
-           }
-           else
-           {
-               //printk("--- setenv nandroot to /dev/mtdblock2 failed! ---\n");
-                printk("--- setenv bootargs to /dev/mtdblock2 failed! ---\n");
-           }
-       }
-   }
-   else
-   {
-       printk("--- upgrade read nand error! ret = %d ---\n", ret);
-   }
-   free(upgrade_buf);
-   /*Zynq7010 upgrade end*/    
+#if 0
+	// for SD card recovry NAND
+	setenv("bootargs", "mem=496M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
+	bootargs = getenv("bootargs");
+	printk("bootargs: %s\n", bootargs);
+#endif
 
 	switch ((zynq_slcr_get_boot_mode()) & ZYNQ_BM_MASK) {
 	case ZYNQ_BM_QSPI:
@@ -342,7 +356,8 @@ int dram_init(void)
 	long sdram_base_addr = 0;
 	long max_sdram_size = 1*1024*1024*1024;
 
-	sys_sdram_size = get_ram_size(&sdram_base_addr, max_sdram_size);
+	//sys_sdram_size = get_ram_size(&sdram_base_addr, max_sdram_size);
+	sys_sdram_size = get_ram_size(sdram_base_addr, max_sdram_size);
 	printf("---1 sys_sdram_size = 0x%08x\n", sys_sdram_size);
 	//sys_sdram_size = sys_sdram_size/2;
 	//printf("---2 sys_sdram_size = 0x%08x\n", sys_sdram_size);
@@ -361,7 +376,13 @@ int dram_init(void)
 	}
 
 	//gd->ram_size = CONFIG_SYS_SDRAM_SIZE;
+
+	// check ram size
 	gd->ram_size = sys_sdram_size - 16*1024*1024;
+
+	// for SD card recovery NAND
+	//gd->ram_size = 496*1024*1024;
+
 	printf("---3 gd->ram_size = 0x%08x\n", gd->ram_size);
 
 	zynq_ddrc_init();
