@@ -16,7 +16,6 @@
 #define UPGARDE_MARKER_ADDR     0x1040000
 #define UPGARDE_MARKER_LEN      16
 #define NAND_SIZE_LIMIT         (128*1024)
-unsigned int ddr_size_type = 0;	// 0: 1GB; 1: 512 MB
 DECLARE_GLOBAL_DATA_PTR;
 
 #if (defined(CONFIG_FPGA) && !defined(CONFIG_SPL_BUILD)) || \
@@ -97,7 +96,7 @@ int board_late_init(void)
 	long sys_sdram_size = 0;
 	long sdram_base_addr = 0;
 	long max_sdram_size = 1*1024*1024*1024;
-	unsigned int ddr_size_type = 0;	// 0: 1GB; 1: 512 MB
+	unsigned int ddr_size_type = 0;	// 0: 1GB; 1: 512 MB; 2: 256MB
 	unsigned int button_power_on = 0;
 
 #if 1 
@@ -116,10 +115,14 @@ int board_late_init(void)
 	{
     	ddr_size_type = 1;
 	}
+	else if(gd->ram_size == 0x0f000000)
+	{
+		ddr_size_type = 2;
+	}
 	else
 	{
-    	printf("~~~ %s: sys_sdram_size = 0x%08x, set it as 512M DDR\n\n", __FUNCTION__, sys_sdram_size);
-		ddr_size_type = 1;
+    	printf("~~~ %s: sys_sdram_size = 0x%08x, set it as 256M DDR\n\n", __FUNCTION__, sys_sdram_size);
+		ddr_size_type = 2;
 	}
 	printf("~~~ %s: ddr_size_type = %d\n\n", __FUNCTION__, ddr_size_type);
 
@@ -140,10 +143,15 @@ int board_late_init(void)
     		setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
 			//setenv("bootargs", "mem=496M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
 		}
+		else if(ddr_size_type == 2)
+		{
+			setenv("bootargs", "noinitrd mem=240M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
+			//setenv("bootargs", "mem=240M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
+		}
 		else
 		{
-    		setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
-			//setenv("bootargs", "mem=496M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
+    		setenv("bootargs", "noinitrd mem=240M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
+			//setenv("bootargs", "mem=240M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
 		}
 		bootargs = getenv("bootargs");
 		printk("bootargs: %s\n", bootargs);
@@ -160,10 +168,15 @@ int board_late_init(void)
 			setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
 			//setenv("bootargs", "mem=496M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
 		}
+		else if(ddr_size_type == 2)
+		{
+			setenv("bootargs", "noinitrd mem=240M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
+			//setenv("bootargs", "mem=240M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
+		}
 		else
 		{
-			//setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
-			setenv("bootargs", "mem=496M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
+			//setenv("bootargs", "noinitrd mem=240M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
+			setenv("bootargs", "mem=240M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
 		}
         bootargs = getenv("bootargs");
 		printk("bootargs: %s\n", bootargs);
@@ -211,10 +224,15 @@ int board_late_init(void)
 						setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
 						//setenv("bootargs", "mem=496M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
 					}
+					else if(ddr_size_type == 2)
+					{
+						setenv("bootargs", "noinitrd mem=240M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
+						//setenv("bootargs", "mem=240M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
+					}
 					else
 					{
-						setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
-						//setenv("bootargs", "mem=496M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
+						setenv("bootargs", "noinitrd mem=240M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=1 rootfstype=ubifs rw rootwait");
+						//setenv("bootargs", "mem=240M console=ttyPS0,115200 ramdisk_size=40960 root=/dev/ram rw earlyprintk");
 					}
 					bootargs = getenv("bootargs");
 					printk("bootargs: %s\n", bootargs);
@@ -239,9 +257,13 @@ int board_late_init(void)
 				{
 					setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
 				}
+				else if(ddr_size_type == 2)
+				{
+					setenv("bootargs", "noinitrd mem=240M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
+				}
 				else
 				{
-					setenv("bootargs", "noinitrd mem=496M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
+					setenv("bootargs", "noinitrd mem=240M console=ttyPS0,115200 root=ubi0:rootfs ubi.mtd=2 rootfstype=ubifs rw rootwait");
 				}
 				bootargs = getenv("bootargs");
 				printk("bootargs: %s\n", bootargs);
@@ -370,9 +392,14 @@ int dram_init(void)
 	{
 		printf("--- %s: sys_sdram_size = 512 MB\n\n", __FUNCTION__);
 	}
+	else if(sys_sdram_size == 0x10000000)
+	{
+		printf("--- %s: sys_sdram_size = 256 MB\n\n", __FUNCTION__);
+	}
 	else
 	{
-		printf("--- %s: sys_sdram_size = 0x%08x\n\n", __FUNCTION__, sys_sdram_size);
+		sys_sdram_size = 0x10000000;
+		printf("--- %s: sys_sdram_size = 0x%08x, and we consider it as 256M\n\n", __FUNCTION__, sys_sdram_size);
 	}
 
 	//gd->ram_size = CONFIG_SYS_SDRAM_SIZE;
